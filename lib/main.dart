@@ -82,108 +82,27 @@ class _RandomWordsState extends State<RandomWords> {
     timer?.cancel();
   }
 
-  void _login() {
-    Navigator.push(context, MaterialPageRoute(builder: (context) {
-      var auth = Provider.of<SettingNotifier>(context);
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Login'),
-        ),
-        body: Center(
-          child: ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              const Text('welcome to startup generator please login',
-                  style: TextStyle(fontSize: 16), textAlign: TextAlign.center),
-              TextField(
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  border: UnderlineInputBorder(),
-                  labelText: 'Email',
-                  alignLabelWithHint: true,
-                ),
-                controller: email,
-              ),
-              TextField(
-                keyboardType: TextInputType.visiblePassword,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  border: UnderlineInputBorder(),
-                  labelText: 'Password',
-                ),
-                controller: password,
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20)),
-                    backgroundColor:
-                        isLoginDisabled ? Colors.white24 : Colors.deepPurple),
-                onPressed: isLoginDisabled
-                    ? null
-                    : () {
-                        setState(() {
-                          isLoginDisabled = true;
-                        });
-                        auth
-                            .signIn(email.text, password.text, context)
-                            .then((value) async {
-                          if (value) {
-                            setState(() {
-                              isLoginDisabled = false;
-                              isLogedIn = true;
-                            });
-                            const snak = SnackBar(
-                              content: Text('Login success'),
-                              duration: Duration(seconds: 2),
-                            );
-                            ScaffoldMessenger.of(context).showSnackBar(snak);
-                            sync();
-                            password.clear();
-                            email.clear();
-                            setState(() {
-                              auth.status = Status.Authenticated;
-                            });
-                            Navigator.of(context).pop();
-                          } else {
-                            password.clear();
-                            var snak = const SnackBar(
-                              content: Text(
-                                  'There was an error logging into the app'),
-                              duration: Duration(seconds: 2),
-                            );
-                            ScaffoldMessenger.of(context).showSnackBar(snak);
-                            setState(() {
-                              isLoginDisabled = false;
-                            });
-                          }
-                        });
-                      },
-                child: const Text('Login'),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20)),
-                  backgroundColor: Colors.blue,
-                ),
-                onPressed: signUp,
-                child: const Text('New user? Click to signup'),
-              )
-            ],
-          ),
-        ),
-      );
-    }));
+  void _logout(BuildContext context) {
+    unSync();
+    var auth = Provider.of<SettingNotifier>(context, listen: false);
+    auth.logout();
+    setState(() {
+      isLogedIn = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Logged out'),
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
-
   void _pushSaved() {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (BuildContext context) {
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation)  {
           var auth = Provider.of<SettingNotifier>(context, listen: false);
           final tiles = auth.saved.map(
-            (String pair) {
+                (String pair) {
               return Dismissible(
                 key: Key(pair),
                 confirmDismiss: (direction) async {
@@ -207,7 +126,7 @@ class _RandomWordsState extends State<RandomWords> {
                               ),
                               child: const Padding(
                                 padding:
-                                    EdgeInsets.fromLTRB(17.0, 10.0, 17.0, 10.0),
+                                EdgeInsets.fromLTRB(17.0, 10.0, 17.0, 10.0),
                                 child: Text(
                                   'Yes',
                                   style: TextStyle(color: Colors.white),
@@ -226,7 +145,7 @@ class _RandomWordsState extends State<RandomWords> {
                               ),
                               child: const Padding(
                                 padding:
-                                    EdgeInsets.fromLTRB(17.0, 10.0, 17.0, 10.0),
+                                EdgeInsets.fromLTRB(17.0, 10.0, 17.0, 10.0),
                                 child: Text(
                                   'No',
                                   style: TextStyle(color: Colors.white),
@@ -278,9 +197,9 @@ class _RandomWordsState extends State<RandomWords> {
           );
           final divided = tiles.isNotEmpty
               ? ListTile.divideTiles(
-                  context: context,
-                  tiles: tiles,
-                ).toList()
+            context: context,
+            tiles: tiles,
+          ).toList()
               : <Widget>[];
 
           return Scaffold(
@@ -290,24 +209,133 @@ class _RandomWordsState extends State<RandomWords> {
             body: ListView(children: divided),
           );
         },
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          var begin = const Offset(1, 0.0);
+          var end = Offset.zero;
+          var curve = Curves.ease;
+
+          var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
       ),
+
     );
+  }
+  void _pushLogin() {
+    Navigator.push(context, PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) {
+      var auth = Provider.of<SettingNotifier>(context);
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Login'),
+        ),
+        body: Center(
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              const Text('welcome to startup generator please login',
+                  style: TextStyle(fontSize: 16), textAlign: TextAlign.center),
+              TextField(
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  border: UnderlineInputBorder(),
+                  labelText: 'Email',
+                  alignLabelWithHint: true,
+                ),
+                controller: email,
+              ),
+              TextField(
+                keyboardType: TextInputType.visiblePassword,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  border: UnderlineInputBorder(),
+                  labelText: 'Password',
+                ),
+                controller: password,
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
+                    backgroundColor:
+                    isLoginDisabled ? Colors.white24 : Colors.deepPurple),
+                onPressed: isLoginDisabled
+                    ? null
+                    : () {
+                  setState(() {
+                    isLoginDisabled = true;
+                  });
+                  auth
+                      .signIn(email.text, password.text, context)
+                      .then((value) async {
+                    if (value) {
+                      setState(() {
+                        isLoginDisabled = false;
+                        isLogedIn = true;
+                      });
+                      const snak = SnackBar(
+                        content: Text('Login success'),
+                        duration: Duration(seconds: 2),
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(snak);
+                      sync();
+                      password.clear();
+                      email.clear();
+                      setState(() {
+                        auth.status = Status.Authenticated;
+                      });
+                      Navigator.of(context).pop();
+                    } else {
+                      password.clear();
+                      var snak = const SnackBar(
+                        content: Text(
+                            'There was an error logging into the app'),
+                        duration: Duration(seconds: 2),
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(snak);
+                      setState(() {
+                        isLoginDisabled = false;
+                      });
+                    }
+                  });
+                },
+                child: const Text('Login'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
+                  backgroundColor: Colors.blue,
+                ),
+                onPressed: signUp,
+                child: const Text('New user? Click to signup'),
+              )
+            ],
+          ),
+        ),
+      );
+    },
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        var begin = const Offset(1, 0.0);
+        var end = Offset.zero;
+        var curve = Curves.ease;
+
+        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+        return SlideTransition(
+          position: animation.drive(tween),
+          child: child,
+        );
+      },
+    ));
+
   }
 
-  void _logout(BuildContext context) {
-    unSync();
-    var auth = Provider.of<SettingNotifier>(context, listen: false);
-    auth.logout();
-    setState(() {
-      isLogedIn = false;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Logged out'),
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
+
 
   void signUp() {
     TextEditingController rePassword = TextEditingController();
@@ -404,7 +432,7 @@ class _RandomWordsState extends State<RandomWords> {
   Widget build(BuildContext context) {
     var loginButton = IconButton(
       icon: const Icon(Icons.login_sharp),
-      onPressed: _login,
+      onPressed: _pushLogin,
       tooltip: "Login",
     );
     var logoutButton = IconButton(
@@ -415,13 +443,15 @@ class _RandomWordsState extends State<RandomWords> {
     var auth = Provider.of<SettingNotifier>(context, listen: false);
     return Scaffold(
       appBar: AppBar(
-        title: isLogedIn ? logoutButton : loginButton,
+        title: const Text("Startup name generator"),
         actions: [
+          isLogedIn ? logoutButton : loginButton,
           IconButton(
-            icon: const Icon(Icons.list),
+            icon: const Icon(Icons.star),
             onPressed: _pushSaved,
             tooltip: 'Saved Suggestions',
           ),
+
         ],
       ),
       body: Stack(
