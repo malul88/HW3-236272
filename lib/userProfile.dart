@@ -75,7 +75,7 @@ class _LoginSheetState extends State<LoginSheet> {
     });
   }
 
-  uploadAavatar() async {
+  uploadAvatar() async {
     setState(() {
       loading = true;
     });
@@ -84,6 +84,9 @@ class _LoginSheetState extends State<LoginSheet> {
       if (value == null) {
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('No image selected')));
+        setState(() {
+          loading = false;
+        });
         return;
       }
       var image = io.File(value.path);
@@ -210,7 +213,7 @@ class _LoginSheetState extends State<LoginSheet> {
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.lightBlue,
                                   ),
-                                  onPressed: () => uploadAavatar(),
+                                  onPressed: () => uploadAvatar(),
                                   child: const Text(
                                     "Change avatar",
                                     style: TextStyle(
